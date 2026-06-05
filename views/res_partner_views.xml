@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Campos de crédito readonly salvo para el grupo "Autoriza crédito Cta Cte":
+         el cajero los VE pero no los edita; solo administración autoriza. -->
+    <record id="view_partner_form_cta_cte" model="ir.ui.view">
+        <field name="name">res.partner.form.cta.cte.autorizada</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <!-- helper invisible para evaluar el readonly por grupo -->
+            <field name="vat" position="after">
+                <field name="puede_autorizar_credito" invisible="1"/>
+            </field>
+            <field name="use_partner_credit_limit" position="attributes">
+                <attribute name="readonly">not puede_autorizar_credito</attribute>
+            </field>
+            <field name="credit_limit" position="attributes">
+                <attribute name="readonly">not puede_autorizar_credito</attribute>
+            </field>
+        </field>
+    </record>
+
+</odoo>

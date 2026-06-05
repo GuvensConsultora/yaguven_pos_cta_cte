@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Activar el control de límite de crédito en todas las compañías al instalar,
+         para que use_partner_credit_limit / credit_limit estén vivos. noupdate=1:
+         se setea una vez; después queda como configuración editable del cliente. -->
+    <function model="res.company" name="write">
+        <value model="res.company" eval="obj().search([]).ids"/>
+        <value eval="{'account_use_credit_limit': True}"/>
+    </function>
+
+</odoo>

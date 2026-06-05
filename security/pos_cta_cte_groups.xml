@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Estructura de grupo O19: el grupo cuelga de un res.groups.privilege,
+         y la categoría cuelga del privilegio (igual que yaguven_operating_unit). -->
+    <record id="module_category_cta_cte" model="ir.module.category">
+        <field name="name">Cuenta Corriente</field>
+        <field name="sequence">95</field>
+    </record>
+
+    <record id="privilege_cta_cte" model="res.groups.privilege">
+        <field name="name">Cuenta Corriente</field>
+        <field name="category_id" ref="module_category_cta_cte"/>
+        <field name="sequence">95</field>
+    </record>
+
+    <!-- Solo este grupo puede autorizar crédito (editar use_partner_credit_limit /
+         credit_limit). El cajero NO lo tiene -> ve los campos readonly. -->
+    <record id="group_autoriza_credito" model="res.groups">
+        <field name="name">Autoriza crédito Cta Cte</field>
+        <field name="privilege_id" ref="privilege_cta_cte"/>
+        <field name="comment">Habilita editar la autorización de crédito de los clientes
+            (límite de crédito y su activación). Quien no tiene este grupo ve esos campos
+            de solo lectura: no puede autorizar clientes a comprar en cuenta corriente.</field>
+    </record>
+
+</odoo>
