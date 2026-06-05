@@ -1,12 +1,14 @@
+from markupsafe import Markup
 from odoo import api, fields, models
+from odoo.tools.misc import html_escape
 
 
 class ResPartner(models.Model):
     _inherit = "res.partner"
 
-    # Auditoría: dejar registrado en el chatter quién cambió la autorización/límite.
-    use_partner_credit_limit = fields.Boolean(tracking=True)
-    credit_limit = fields.Monetary(tracking=True)
+    # NO redefinir use_partner_credit_limit / credit_limit: son campos nativos
+    # (credit_limit es company_dependent; redefinirlos rompe el compute nativo).
+    # La auditoría de quién autoriza se hace con el override de write() de abajo.
 
     # Helper de UI: True si el usuario actual puede autorizar crédito (grupo dedicado).
     # Se usa en la vista para dejar los campos de crédito readonly a quien NO lo tiene.
@@ -28,3 +30,18 @@ class ResPartner(models.Model):
             if f not in fields_list:
                 fields_list.append(f)
         return fields_list
+
+    def write(self, vals):
+        """Auditoría: si cambia la autorización de crédito, dejar constancia en el
+        chatter (quién y a qué valor). Reemplaza el tracking, que no se puede usar
+        sobre estos campos nativos sin romperlos."""
+        auditar = {"use_partner_credit_limit", "credit_limit"} & set(vals)
+        res = super().write(vals)
+        if auditar:
+            usuario = html_escape(self.env.user.name)
+            detalle = ", ".join(f"{html_escape(k)} = {html_escape(str(vals[k]))}" for k in sorted(auditar))
+            body = Markup("<p><strong>Autorización de crédito modificada</strong> por %s</p><p>%s</p>") % (
+                Markup(usuario), Markup(detalle))
+            for partner in self:
+                partner.message_post(body=body, message_type="comment", subtype_xmlid="mail.mt_note")
+        return res
