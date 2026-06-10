@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Botón "Cuenta de cliente" (pay_later):
+         - se oculta si el cliente no está autorizado o su saldo ya cubre el límite;
+         - si tiene margen, muestra cuánto crédito le queda disponible. -->
+    <t t-inherit="point_of_sale.PaymentScreenMethods" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('paymentmethod')]" position="attributes">
+            <attribute name="t-if">!(this.pos.cashier._role === 'minimal' and paymentMethod.type === 'pay_later') and !ctaCteOculto(paymentMethod)</attribute>
+        </xpath>
+        <xpath expr="//span[hasclass('payment-name')]" position="after">
+            <span t-if="ctaCteDisponible(paymentMethod)"
+                  class="badge text-bg-success ms-2"
+                  t-esc="ctaCteDisponible(paymentMethod)"/>
+        </xpath>
+    </t>
+
+</templates>

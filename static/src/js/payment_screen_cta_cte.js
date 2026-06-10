@@ -46,6 +46,45 @@ patch(PaymentScreen.prototype, {
         return super.addNewPaymentLine(...arguments);
     },
 
+    /** True si el botón "Cuenta de cliente" debe OCULTARSE para el cliente actual:
+     *  cliente no autorizado, o con su saldo pendiente ya en (o sobre) el límite.
+     *  Sin cliente seleccionado se muestra (el click pide seleccionar uno). */
+    ctaCteOculto(paymentMethod) {
+        if (!paymentMethod || paymentMethod.type !== "pay_later") {
+            return false;
+        }
+        const partner = partnerDe(this.currentOrder);
+        if (!partner) {
+            return false;
+        }
+        if (!partner.use_partner_credit_limit) {
+            return true;
+        }
+        const limite = partner.credit_limit || 0;
+        if (!limite) {
+            return false; // límite 0 = sin tope: se muestra sin leyenda
+        }
+        return (partner.credit || 0) >= limite;
+    },
+
+    /** Texto "Disponible $X" para el botón pay_later (lo que falta para completar
+     *  el límite: límite - saldo pendiente de cobro), o null si no corresponde. */
+    ctaCteDisponible(paymentMethod) {
+        if (!paymentMethod || paymentMethod.type !== "pay_later") {
+            return null;
+        }
+        const partner = partnerDe(this.currentOrder);
+        if (!partner || !partner.use_partner_credit_limit) {
+            return null;
+        }
+        const limite = partner.credit_limit || 0;
+        const disponible = limite - (partner.credit || 0);
+        if (!limite || disponible <= 0) {
+            return null;
+        }
+        return _t("Disponible %s", this.env.utils.formatCurrency(disponible));
+    },
+
     /** Devuelve el mensaje de bloqueo, o false si está habilitado. */
     _ctaCteBloqueada(partner) {
         if (!partner) {
