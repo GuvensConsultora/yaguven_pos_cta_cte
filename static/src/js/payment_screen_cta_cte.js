@@ -15,11 +15,26 @@ import { patch } from "@web/core/utils/patch";
 import { AlertDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
 import { _t } from "@web/core/l10n/translation";
 
+/** O19 renombró la API del order a camelCase (getPartner, getTotalWithTax);
+ *  resolver con fallback para tolerar ambas variantes. */
+function partnerDe(order) {
+    if (!order) return null;
+    if (typeof order.getPartner === "function") return order.getPartner();
+    if (typeof order.get_partner === "function") return order.get_partner();
+    return order.partner_id || null;
+}
+function totalDe(order) {
+    if (!order) return 0;
+    if (typeof order.getTotalWithTax === "function") return order.getTotalWithTax();
+    if (typeof order.get_total_with_tax === "function") return order.get_total_with_tax();
+    return 0;
+}
+
 patch(PaymentScreen.prototype, {
     async addNewPaymentLine(paymentMethod) {
         if (paymentMethod && paymentMethod.type === "pay_later") {
             const order = this.currentOrder;
-            const motivo = this._ctaCteBloqueada(order && order.get_partner());
+            const motivo = this._ctaCteBloqueada(partnerDe(order));
             if (motivo) {
                 this.dialog.add(AlertDialog, {
                     title: _t("Cuenta corriente no autorizada"),
@@ -45,8 +60,7 @@ patch(PaymentScreen.prototype, {
         }
         const limite = partner.credit_limit || 0;
         const deuda = partner.credit || 0;
-        const order = this.currentOrder;
-        const total = order && order.get_total_with_tax ? order.get_total_with_tax() : 0;
+        const total = totalDe(this.currentOrder);
         if (limite && deuda + total > limite) {
             return _t(
                 "El cliente «%s» supera su límite de crédito autorizado.",
