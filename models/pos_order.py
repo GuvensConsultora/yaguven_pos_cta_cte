@@ -20,6 +20,12 @@ class PosOrder(models.Model):
             if not partner:
                 raise ValidationError(_(
                     "No se puede cerrar a cuenta corriente sin cliente identificado."))
+            if partner._es_consumidor_final_generico():
+                raise ValidationError(_(
+                    "No se puede cerrar a cuenta corriente con «%s»: el consumidor "
+                    "final genérico no puede tener cuenta corriente. Debe cobrarse "
+                    "el ticket o seleccionarse un cliente real autorizado.",
+                    partner.display_name))
             if not partner.use_partner_credit_limit:
                 raise ValidationError(_(
                     "El cliente «%s» no está autorizado para cuenta corriente. "

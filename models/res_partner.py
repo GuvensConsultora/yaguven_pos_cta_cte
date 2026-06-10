@@ -1,5 +1,6 @@
 from markupsafe import Markup
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 from odoo.tools.misc import html_escape
 
 
@@ -31,10 +32,29 @@ class ResPartner(models.Model):
                 fields_list.append(f)
         return fields_list
 
+    def _es_consumidor_final_generico(self):
+        """True si el partner es el consumidor final genérico/anónimo: el nativo de
+        l10n_ar (par_cfa) o duplicados de migración (mismo nombre, sin CUIT). Estos
+        partners nunca pueden operar a cuenta corriente: representan ventas sin
+        cliente identificado, no una persona con la que exista relación de crédito."""
+        self.ensure_one()
+        cfa = self.env.ref("l10n_ar.par_cfa", raise_if_not_found=False)
+        if cfa and self.id == cfa.id:
+            return True
+        return "consumidor final" in (self.name or "").strip().lower() and not self.vat
+
     def write(self, vals):
         """Auditoría: si cambia la autorización de crédito, dejar constancia en el
         chatter (quién y a qué valor). Reemplaza el tracking, que no se puede usar
         sobre estos campos nativos sin romperlos."""
+        if vals.get("use_partner_credit_limit"):
+            for partner in self:
+                if partner._es_consumidor_final_generico():
+                    raise ValidationError(_(
+                        "No se puede autorizar cuenta corriente a «%s»: es el "
+                        "consumidor final genérico (ventas sin cliente identificado). "
+                        "Para vender a cuenta corriente, usar un cliente real con "
+                        "identificación.", partner.display_name))
         auditar = {"use_partner_credit_limit", "credit_limit"} & set(vals)
         res = super().write(vals)
         if auditar:

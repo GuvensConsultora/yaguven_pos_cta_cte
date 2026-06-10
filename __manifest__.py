@@ -1,6 +1,6 @@
 {
     "name": "Yagüven — POS Cuenta Corriente Autorizada",
-    "version": "19.0.1.0.1",
+    "version": "19.0.1.0.2",
     "category": "Point of Sale",
     "summary": "Solo clientes autorizados (límite de crédito) pueden cerrar tickets a "
                "cuenta corriente en el POS; el resto debe cobrarse antes de emitir.",
