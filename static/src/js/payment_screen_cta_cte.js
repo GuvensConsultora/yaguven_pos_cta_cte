@@ -23,10 +23,16 @@ function partnerDe(order) {
     if (typeof order.get_partner === "function") return order.get_partner();
     return order.partner_id || null;
 }
+/** O19 no tiene `getTotalWithTax()` ni `get_total_with_tax()`: el total con
+ *  impuestos de la venta en curso es el getter `totalDue` (y `priceIncl` como
+ *  respaldo). Mientras se llamaba a los nombres viejos esto devolvia SIEMPRE 0,
+ *  asi que el control de limite comparaba la deuda contra si misma y dejaba
+ *  pasar cualquier venta con el cliente ya en el tope. */
 function totalDe(order) {
     if (!order) return 0;
+    if (typeof order.totalDue === "number") return order.totalDue;
+    if (typeof order.priceIncl === "number") return order.priceIncl;
     if (typeof order.getTotalWithTax === "function") return order.getTotalWithTax();
-    if (typeof order.get_total_with_tax === "function") return order.get_total_with_tax();
     return 0;
 }
 
