@@ -88,7 +88,7 @@ patch(PaymentScreen.prototype, {
         if (!limite || disponible <= 0) {
             return null;
         }
-        return _t("Disponible %s", this.env.utils.formatCurrency(disponible));
+        return _t("Disponible %s", this.pos.formatCurrency(disponible));
     },
 
     /** Devuelve el mensaje de bloqueo, o false si está habilitado. */

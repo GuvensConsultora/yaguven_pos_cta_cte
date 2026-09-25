@@ -6,12 +6,13 @@
          - si tiene margen, muestra cuánto crédito le queda disponible. -->
     <t t-inherit="point_of_sale.PaymentScreenMethods" t-inherit-mode="extension">
         <xpath expr="//div[hasclass('paymentmethod')]" position="attributes">
-            <attribute name="t-if">!(this.pos.cashier._role === 'minimal' and paymentMethod.type === 'pay_later') and !ctaCteOculto(paymentMethod)</attribute>
+            <!-- 20: el filtro por rol del cajero lo hace el contenedor (this.showPaymentMethod) -->
+            <attribute name="t-if">!this.ctaCteOculto(paymentMethod)</attribute>
         </xpath>
         <xpath expr="//span[hasclass('payment-name')]" position="after">
-            <span t-if="ctaCteDisponible(paymentMethod)"
+            <span t-if="this.ctaCteDisponible(paymentMethod)"
                   class="badge text-bg-success ms-2"
-                  t-esc="ctaCteDisponible(paymentMethod)"/>
+                  t-out="this.ctaCteDisponible(paymentMethod)"/>
         </xpath>
     </t>
 
