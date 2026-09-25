@@ -38,7 +38,9 @@ function totalDe(order) {
 
 patch(PaymentScreen.prototype, {
     async addNewPaymentLine(paymentMethod) {
-        if (paymentMethod && paymentMethod.type === "pay_later") {
+        // El cheque (yaguven_pos_cheque) también es pay_later en Odoo 20, pero NO es
+        // cuenta corriente: no se oculta ni se bloquea por el crédito.
+        if (paymentMethod && paymentMethod.type === "pay_later" && !paymentMethod.is_check) {
             const order = this.currentOrder;
             const motivo = this._ctaCteBloqueada(partnerDe(order));
             if (motivo) {
@@ -56,7 +58,7 @@ patch(PaymentScreen.prototype, {
      *  cliente no autorizado, o con su saldo pendiente ya en (o sobre) el límite.
      *  Sin cliente seleccionado se muestra (el click pide seleccionar uno). */
     ctaCteOculto(paymentMethod) {
-        if (!paymentMethod || paymentMethod.type !== "pay_later") {
+        if (!paymentMethod || paymentMethod.type !== "pay_later" || paymentMethod.is_check) {
             return false;
         }
         const partner = partnerDe(this.currentOrder);
@@ -76,7 +78,7 @@ patch(PaymentScreen.prototype, {
     /** Texto "Disponible $X" para el botón pay_later (lo que falta para completar
      *  el límite: límite - saldo pendiente de cobro), o null si no corresponde. */
     ctaCteDisponible(paymentMethod) {
-        if (!paymentMethod || paymentMethod.type !== "pay_later") {
+        if (!paymentMethod || paymentMethod.type !== "pay_later" || paymentMethod.is_check) {
             return null;
         }
         const partner = partnerDe(this.currentOrder);

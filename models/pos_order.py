@@ -12,7 +12,9 @@ class PosOrder(models.Model):
         (`use_partner_credit_limit`) y no supera su límite. No se saltea por API/UI."""
         for order in self:
             paylater = order.payment_ids.filtered(
+                # El cheque (yaguven_pos_cheque) también es pay_later en 20 y no es cuenta corriente.
                 lambda p: p.payment_method_id.type == "pay_later" and p.amount > 0
+                and not ('is_check' in p.payment_method_id._fields and p.payment_method_id.is_check)
             )
             if not paylater:
                 continue
