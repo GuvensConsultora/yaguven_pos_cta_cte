@@ -36,11 +36,19 @@ function totalDe(order) {
     return 0;
 }
 
+/** ¿Es el medio de cuenta corriente? pay_later que no sea cheque ni retención
+ *  (`yg_es_retencion` lo define yaguven_pos_cheque_settle; si no está instalado, es undefined). */
+function esCtaCte(paymentMethod) {
+    return Boolean(paymentMethod && paymentMethod.type === "pay_later" &&
+                   !paymentMethod.is_check && !paymentMethod.yg_es_retencion);
+}
+
 patch(PaymentScreen.prototype, {
     async addNewPaymentLine(paymentMethod) {
-        // El cheque (yaguven_pos_cheque) también es pay_later en Odoo 20, pero NO es
-        // cuenta corriente: no se oculta ni se bloquea por el crédito.
-        if (paymentMethod && paymentMethod.type === "pay_later" && !paymentMethod.is_check) {
+        // El cheque (yaguven_pos_cheque) y la retención (yaguven_pos_cheque_settle) también
+        // son pay_later en Odoo 20, pero NO son cuenta corriente: no se ocultan ni se
+        // bloquean por el crédito.
+        if (esCtaCte(paymentMethod)) {
             const order = this.currentOrder;
             const motivo = this._ctaCteBloqueada(partnerDe(order));
             if (motivo) {
@@ -58,7 +66,7 @@ patch(PaymentScreen.prototype, {
      *  cliente no autorizado, o con su saldo pendiente ya en (o sobre) el límite.
      *  Sin cliente seleccionado se muestra (el click pide seleccionar uno). */
     ctaCteOculto(paymentMethod) {
-        if (!paymentMethod || paymentMethod.type !== "pay_later" || paymentMethod.is_check) {
+        if (!esCtaCte(paymentMethod)) {
             return false;
         }
         const partner = partnerDe(this.currentOrder);
@@ -78,7 +86,7 @@ patch(PaymentScreen.prototype, {
     /** Texto "Disponible $X" para el botón pay_later (lo que falta para completar
      *  el límite: límite - saldo pendiente de cobro), o null si no corresponde. */
     ctaCteDisponible(paymentMethod) {
-        if (!paymentMethod || paymentMethod.type !== "pay_later" || paymentMethod.is_check) {
+        if (!esCtaCte(paymentMethod)) {
             return null;
         }
         const partner = partnerDe(this.currentOrder);
